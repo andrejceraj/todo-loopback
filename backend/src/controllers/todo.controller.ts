@@ -11,9 +11,9 @@ import {
   requestBody,
   RequestContext,
 } from '@loopback/rest';
-import jwt from 'jsonwebtoken';
 import {Todo} from '../models';
 import {TodoRepository, UserRepository} from '../repositories';
+import {checkAuth} from '../utils';
 
 export class TodoController {
   constructor(
@@ -21,24 +21,6 @@ export class TodoController {
     @repository(UserRepository) protected userRepository: UserRepository,
     @repository(TodoRepository) public todoRepository: TodoRepository,
   ) {}
-
-  private checkAuth = (): any => {
-    try {
-      const token = this.context.request.headers.authorization?.split(' ')[1];
-      if (token) {
-        const decoded = jwt.verify(token, 'JWT_secret');
-        if (decoded) {
-          return decoded;
-        }
-      }
-      throw {};
-    } catch (err) {
-      throw {
-        code: 401,
-        message: 'Unauthorized',
-      };
-    }
-  };
 
   // GET ALL
   @get('/todos', {
@@ -57,7 +39,7 @@ export class TodoController {
     },
   })
   async find(): Promise<Todo[]> {
-    const currentUser = this.checkAuth();
+    const currentUser = checkAuth(this.context);
     return this.todoRepository.find({where: {userId: currentUser.id}});
   }
 
@@ -83,7 +65,7 @@ export class TodoController {
     })
     todo: Omit<Todo, 'id'>,
   ): Promise<Todo> {
-    const currentUser = this.checkAuth();
+    const currentUser = checkAuth(this.context);
     todo.userId = currentUser.id;
     return this.todoRepository.create(todo);
   }
@@ -101,7 +83,7 @@ export class TodoController {
     },
   })
   async findById(@param.path.number('id') id: number): Promise<Todo> {
-    const currentUser = this.checkAuth();
+    const currentUser = checkAuth(this.context);
     const userTodos = await this.userRepository
       .todos(currentUser.id)
       .find({where: {id: id}});
@@ -132,7 +114,7 @@ export class TodoController {
     })
     todo: Todo,
   ): Promise<void> {
-    const currentUser = this.checkAuth();
+    const currentUser = checkAuth(this.context);
     const userTodos = await this.todoRepository.findOne({
       where: {id: id, userId: currentUser.id},
     });
@@ -157,7 +139,7 @@ export class TodoController {
     @param.path.number('id') id: number,
     @requestBody() todo: Todo,
   ): Promise<void> {
-    const currentUser = this.checkAuth();
+    const currentUser = checkAuth(this.context);
     const userTodo = await this.todoRepository.findOne({
       where: {id: id, userId: currentUser.id},
     });
@@ -179,7 +161,7 @@ export class TodoController {
     },
   })
   async deleteById(@param.path.number('id') id: number): Promise<void> {
-    const currentUser = this.checkAuth();
+    const currentUser = checkAuth(this.context);
     const userTodos = await this.todoRepository.findOne({
       where: {id: id, userId: currentUser.id},
     });
