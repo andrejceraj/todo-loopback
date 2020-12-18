@@ -1,12 +1,5 @@
 import {inject} from '@loopback/core';
-import {
-  Count,
-  CountSchema,
-  Filter,
-  FilterExcludingWhere,
-  repository,
-  Where,
-} from '@loopback/repository';
+import {repository} from '@loopback/repository';
 import {
   del,
   get,
@@ -18,16 +11,57 @@ import {
   requestBody,
   RequestContext,
 } from '@loopback/rest';
+import jwt from 'jsonwebtoken';
 import {Todo} from '../models';
-import {TodoRepository} from '../repositories';
+import {TodoRepository, UserRepository} from '../repositories';
 
 export class TodoController {
   constructor(
     @inject.context() public context: RequestContext,
-    @repository(TodoRepository)
-    public todoRepository: TodoRepository,
+    @repository(UserRepository) protected userRepository: UserRepository,
+    @repository(TodoRepository) public todoRepository: TodoRepository,
   ) {}
 
+  private checkAuth = (): any => {
+    try {
+      const token = this.context.request.headers.authorization?.split(' ')[1];
+      if (token) {
+        const decoded = jwt.verify(token, 'JWT_secret');
+        if (decoded) {
+          return decoded;
+        }
+      }
+      throw {};
+    } catch (err) {
+      throw {
+        code: 401,
+        message: 'Unauthorized',
+      };
+    }
+  };
+
+  // GET ALL
+  @get('/todos', {
+    responses: {
+      '200': {
+        description: 'Array of Todo model instances',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'array',
+              items: getModelSchemaRef(Todo, {includeRelations: true}),
+            },
+          },
+        },
+      },
+    },
+  })
+  async find(): Promise<Todo[]> {
+    const currentUser = this.checkAuth();
+    return this.todoRepository.find({where: {userId: currentUser.id}});
+  }
+
+  // CREATE
   @post('/todos', {
     responses: {
       '200': {
@@ -49,83 +83,9 @@ export class TodoController {
     })
     todo: Omit<Todo, 'id'>,
   ): Promise<Todo> {
+    const currentUser = this.checkAuth();
+    todo.userId = currentUser.id;
     return this.todoRepository.create(todo);
-  }
-
-  @get('/todos/count', {
-    responses: {
-      '200': {
-        description: 'Todo model count',
-        content: {'application/json': {schema: CountSchema}},
-      },
-    },
-  })
-  async count(@param.where(Todo) where?: Where<Todo>): Promise<Count> {
-    return this.todoRepository.count(where);
-  }
-
-  @get('/todoss', {
-    responses: {
-      '200': {
-        description: 'Array of Todo model instances',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'array',
-              items: getModelSchemaRef(Todo, {includeRelations: true}),
-            },
-          },
-        },
-      },
-    },
-  })
-  async getAll(): Promise<Todo[]> {
-    const currentUser = this.context.request.body.currentUser;
-    console.log('currentUser: ' + currentUser);
-    return this.todoRepository.find({
-      where: {userId: currentUser.id},
-    });
-  }
-
-  @get('/todos', {
-    responses: {
-      '200': {
-        description: 'Array of Todo model instances',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'array',
-              items: getModelSchemaRef(Todo, {includeRelations: true}),
-            },
-          },
-        },
-      },
-    },
-  })
-  async find(@param.filter(Todo) filter?: Filter<Todo>): Promise<Todo[]> {
-    return this.todoRepository.find(filter);
-  }
-
-  @patch('/todos', {
-    responses: {
-      '200': {
-        description: 'Todo PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
-      },
-    },
-  })
-  async updateAll(
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Todo, {partial: true}),
-        },
-      },
-    })
-    todo: Todo,
-    @param.where(Todo) where?: Where<Todo>,
-  ): Promise<Count> {
-    return this.todoRepository.updateAll(todo, where);
   }
 
   @get('/todos/{id}', {
@@ -140,11 +100,18 @@ export class TodoController {
       },
     },
   })
-  async findById(
-    @param.path.number('id') id: number,
-    @param.filter(Todo, {exclude: 'where'}) filter?: FilterExcludingWhere<Todo>,
-  ): Promise<Todo> {
-    return this.todoRepository.findById(id, filter);
+  async findById(@param.path.number('id') id: number): Promise<Todo> {
+    const currentUser = this.checkAuth();
+    const userTodos = await this.userRepository
+      .todos(currentUser.id)
+      .find({where: {id: id}});
+    if (userTodos.length == 0) {
+      throw {
+        code: 401,
+        message: 'Unauthorized',
+      };
+    }
+    return userTodos[0];
   }
 
   @patch('/todos/{id}', {
@@ -165,7 +132,18 @@ export class TodoController {
     })
     todo: Todo,
   ): Promise<void> {
-    await this.todoRepository.updateById(id, todo);
+    const currentUser = this.checkAuth();
+    const userTodos = await this.todoRepository.findOne({
+      where: {id: id, userId: currentUser.id},
+    });
+    if (!userTodos) {
+      throw {
+        code: 401,
+        message: 'Unauthorized',
+      };
+    }
+    todo.userId = currentUser.id;
+    return await this.todoRepository.updateById(id, todo);
   }
 
   @put('/todos/{id}', {
@@ -179,7 +157,18 @@ export class TodoController {
     @param.path.number('id') id: number,
     @requestBody() todo: Todo,
   ): Promise<void> {
-    await this.todoRepository.replaceById(id, todo);
+    const currentUser = this.checkAuth();
+    const userTodo = await this.todoRepository.findOne({
+      where: {id: id, userId: currentUser.id},
+    });
+    if (!userTodo) {
+      throw {
+        code: 401,
+        message: 'Unauthorized',
+      };
+    }
+    todo.userId = currentUser.id;
+    return await this.todoRepository.replaceById(id, todo);
   }
 
   @del('/todos/{id}', {
@@ -190,6 +179,16 @@ export class TodoController {
     },
   })
   async deleteById(@param.path.number('id') id: number): Promise<void> {
-    await this.todoRepository.deleteById(id);
+    const currentUser = this.checkAuth();
+    const userTodos = await this.todoRepository.findOne({
+      where: {id: id, userId: currentUser.id},
+    });
+    if (!userTodos) {
+      throw {
+        code: 401,
+        message: 'Unauthorized',
+      };
+    }
+    return await this.todoRepository.deleteById(id);
   }
 }
