@@ -7,23 +7,120 @@ import {
   Where,
 } from '@loopback/repository';
 import {
-  post,
-  param,
+  del,
   get,
   getModelSchemaRef,
+  param,
   patch,
+  post,
   put,
-  del,
   requestBody,
 } from '@loopback/rest';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import {User} from '../models';
 import {UserRepository} from '../repositories';
+
+class UserCredentials {
+  username: string;
+  password: string;
+}
 
 export class UserController {
   constructor(
     @repository(UserRepository)
-    public userRepository : UserRepository,
+    public userRepository: UserRepository,
   ) {}
+
+  @post('/signup', {
+    responses: {
+      '200': {
+        description: 'User model instance',
+        content: {
+          'application/json': {schema: getModelSchemaRef(User)},
+        },
+      },
+    },
+  })
+  async signup(
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(UserCredentials),
+        },
+      },
+    })
+    userCredentials: UserCredentials,
+  ): Promise<User> {
+    const foundUser = await this.userRepository.findOne({
+      where: {username: userCredentials.username},
+    });
+    if (foundUser) {
+      throw {
+        code: 409,
+        message: 'Username already exists',
+      };
+    }
+    const password_hash = await bcrypt.hash(userCredentials.password, 10);
+    const newUser = new User();
+    newUser.username = userCredentials.username;
+    newUser.password_hash = password_hash;
+    return this.userRepository.create(newUser);
+  }
+
+  @post('/login', {
+    responses: {
+      '200': {
+        description: 'Token',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                token: {
+                  type: 'string',
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  async login(
+    @requestBody({
+      content: {
+        'application/json': {
+          schema: getModelSchemaRef(UserCredentials),
+        },
+      },
+    })
+    userCredentials: UserCredentials,
+  ): Promise<{token: string}> {
+    const user = await this.userRepository.findOne({
+      where: {username: userCredentials.username},
+    });
+    try {
+      if (user) {
+        const result = await bcrypt.compare(
+          userCredentials.password,
+          user.password_hash,
+        );
+        if (result) {
+          const token = jwt.sign(
+            {id: user.id, username: user.username},
+            'JWT_secret',
+            {expiresIn: '2h'},
+          );
+          return {token: token};
+        }
+      }
+    } catch (error) {}
+    throw {
+      code: 401,
+      message: 'Username or password is incorrect',
+    };
+  }
 
   @post('/users', {
     responses: {
@@ -57,9 +154,7 @@ export class UserController {
       },
     },
   })
-  async count(
-    @param.where(User) where?: Where<User>,
-  ): Promise<Count> {
+  async count(@param.where(User) where?: Where<User>): Promise<Count> {
     return this.userRepository.count(where);
   }
 
@@ -78,9 +173,7 @@ export class UserController {
       },
     },
   })
-  async find(
-    @param.filter(User) filter?: Filter<User>,
-  ): Promise<User[]> {
+  async find(@param.filter(User) filter?: Filter<User>): Promise<User[]> {
     return this.userRepository.find(filter);
   }
 
@@ -120,7 +213,7 @@ export class UserController {
   })
   async findById(
     @param.path.number('id') id: number,
-    @param.filter(User, {exclude: 'where'}) filter?: FilterExcludingWhere<User>
+    @param.filter(User, {exclude: 'where'}) filter?: FilterExcludingWhere<User>,
   ): Promise<User> {
     return this.userRepository.findById(id, filter);
   }
