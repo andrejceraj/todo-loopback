@@ -1,3 +1,4 @@
+import {inject} from '@loopback/core';
 import {
   Count,
   CountSchema,
@@ -7,22 +8,24 @@ import {
   Where,
 } from '@loopback/repository';
 import {
-  post,
-  param,
+  del,
   get,
   getModelSchemaRef,
+  param,
   patch,
+  post,
   put,
-  del,
   requestBody,
+  RequestContext,
 } from '@loopback/rest';
 import {Todo} from '../models';
 import {TodoRepository} from '../repositories';
 
 export class TodoController {
   constructor(
+    @inject.context() public context: RequestContext,
     @repository(TodoRepository)
-    public todoRepository : TodoRepository,
+    public todoRepository: TodoRepository,
   ) {}
 
   @post('/todos', {
@@ -57,10 +60,31 @@ export class TodoController {
       },
     },
   })
-  async count(
-    @param.where(Todo) where?: Where<Todo>,
-  ): Promise<Count> {
+  async count(@param.where(Todo) where?: Where<Todo>): Promise<Count> {
     return this.todoRepository.count(where);
+  }
+
+  @get('/todoss', {
+    responses: {
+      '200': {
+        description: 'Array of Todo model instances',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'array',
+              items: getModelSchemaRef(Todo, {includeRelations: true}),
+            },
+          },
+        },
+      },
+    },
+  })
+  async getAll(): Promise<Todo[]> {
+    const currentUser = this.context.request.body.currentUser;
+    console.log('currentUser: ' + currentUser);
+    return this.todoRepository.find({
+      where: {userId: currentUser.id},
+    });
   }
 
   @get('/todos', {
@@ -78,9 +102,7 @@ export class TodoController {
       },
     },
   })
-  async find(
-    @param.filter(Todo) filter?: Filter<Todo>,
-  ): Promise<Todo[]> {
+  async find(@param.filter(Todo) filter?: Filter<Todo>): Promise<Todo[]> {
     return this.todoRepository.find(filter);
   }
 
@@ -120,7 +142,7 @@ export class TodoController {
   })
   async findById(
     @param.path.number('id') id: number,
-    @param.filter(Todo, {exclude: 'where'}) filter?: FilterExcludingWhere<Todo>
+    @param.filter(Todo, {exclude: 'where'}) filter?: FilterExcludingWhere<Todo>,
   ): Promise<Todo> {
     return this.todoRepository.findById(id, filter);
   }

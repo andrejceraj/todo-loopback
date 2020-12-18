@@ -1,4 +1,5 @@
 import {ApplicationConfig, BackendApplication} from './application';
+import {log} from './middleware';
 
 export * from './application';
 
@@ -6,6 +7,7 @@ export async function main(options: ApplicationConfig = {}) {
   const app = new BackendApplication(options);
   await app.boot();
   await app.start();
+  app.middleware(log);
 
   const url = app.restServer.url;
   console.log(`Server is running at ${url}`);
