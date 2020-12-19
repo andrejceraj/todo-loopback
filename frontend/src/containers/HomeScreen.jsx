@@ -28,12 +28,12 @@ class HomeScreen extends Component {
     });
   };
 
-  setTodoCompletion = (todoId) => {
+  editTodo = (todo) => {
     let todos = this.state.todos;
     for (let i = 0; i < todos.length; i++) {
-      if (todos[i].id === todoId) {
-        todos[i].done = !todos[i].done;
-        axiosInstance.patch("/todos/" + todos[i].id, { done: todos[i].done });
+      if (todos[i].id === todo.id) {
+        todos[i] = todo;
+        axiosInstance.put("/todos/" + todos[i].id, todos[i]);
         break;
       }
     }
@@ -53,7 +53,7 @@ class HomeScreen extends Component {
         (!todo.done && ["all", "todo"].includes(filter))
       ) {
         return (
-          <Todo todo={todo} setTodoCompletion={this.setTodoCompletion} id={i} />
+          <Todo todo={todo} editTodo={this.editTodo} deleteTodo={this.deleteTodo} />
         );
       } else {
         return null;
@@ -68,6 +68,19 @@ class HomeScreen extends Component {
       this.setState({ todos });
     });
   };
+
+  deleteTodo = (todo) => {
+    axiosInstance.delete("/todos/" + todo.id).then(result => {
+      let todos = this.state.todos;
+      for (let i = 0; i < todos.length; i++) {
+        if (todos[i].id === todo.id) {
+          todos.splice(i, 1);
+          break;
+        }
+      }
+      this.setState({ todos });
+    })
+  }
 
   render = () => {
     const user = getCurrentUser();

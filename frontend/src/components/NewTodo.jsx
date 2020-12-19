@@ -15,28 +15,19 @@ const NewTodo = (props) => {
   return (
     <>
       {!inputMode && (
-        <Button onClick={() => setInputMode(true)} variant="primary">
+        <Button className="d-block" onClick={() => setInputMode(true)} variant="primary">
           Create task
         </Button>
       )}
       {inputMode && (
         <Form onSubmit={(e) => handleCreateTodo(e)}>
           <Form.Group>
-            <Form.Control
-              id="description"
-              name="description"
-              type="text"
-              placeholder="New task"
-            />
+            <Form.Control id="description" name="description" type="text" placeholder="New task" />
           </Form.Group>
           <Button variant="primary" type="submit">
             Submit
           </Button>
-          <Button
-            onClick={() => setInputMode(false)}
-            variant="danger"
-            type="canel"
-          >
+          <Button onClick={() => setInputMode(false)} variant="danger" type="canel">
             Cancel
           </Button>
         </Form>

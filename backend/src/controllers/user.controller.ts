@@ -61,7 +61,6 @@ export class UserController {
     const token = jwt.sign(
       {id: newUser.id, username: newUser.username},
       'JWT_secret',
-      {expiresIn: '2h'},
     );
     return {
       token: token,
@@ -115,7 +114,6 @@ export class UserController {
           const token = jwt.sign(
             {id: user.id, username: user.username},
             'JWT_secret',
-            {expiresIn: '2h'},
           );
           return {
             token: token,
