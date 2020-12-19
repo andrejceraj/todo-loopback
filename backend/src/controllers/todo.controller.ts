@@ -23,27 +23,6 @@ export class TodoController {
     @repository(TodoRepository) public todoRepository: TodoRepository,
   ) {}
 
-  // GET ALL
-  @get('/todos', {
-    responses: {
-      '200': {
-        description: 'Array of Todo model instances',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'array',
-              items: getModelSchemaRef(Todo, {includeRelations: true}),
-            },
-          },
-        },
-      },
-    },
-  })
-  async find(): Promise<Todo[]> {
-    const currentUser = checkAuth(this.context);
-    return this.todoRepository.find({where: {userId: currentUser.id}});
-  }
-
   // CREATE
   @post('/todos', {
     responses: {
