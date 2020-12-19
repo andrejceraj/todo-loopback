@@ -4,6 +4,7 @@ import {
   del,
   get,
   getModelSchemaRef,
+  HttpErrors,
   param,
   patch,
   post,
@@ -70,6 +71,7 @@ export class TodoController {
     return this.todoRepository.create(todo);
   }
 
+  // GET ONE
   @get('/todos/{id}', {
     responses: {
       '200': {
@@ -88,14 +90,12 @@ export class TodoController {
       .todos(currentUser.id)
       .find({where: {id: id}});
     if (userTodos.length == 0) {
-      throw {
-        code: 401,
-        message: 'Unauthorized',
-      };
+      throw new HttpErrors.NotFound('Todo not found');
     }
     return userTodos[0];
   }
 
+  // UPDATE (UPDATE)
   @patch('/todos/{id}', {
     responses: {
       '204': {
@@ -119,15 +119,13 @@ export class TodoController {
       where: {id: id, userId: currentUser.id},
     });
     if (!userTodos) {
-      throw {
-        code: 401,
-        message: 'Unauthorized',
-      };
+      throw new HttpErrors.NotFound('Todo not found');
     }
     todo.userId = currentUser.id;
     return await this.todoRepository.updateById(id, todo);
   }
 
+  // UPDATE (REPLACE)
   @put('/todos/{id}', {
     responses: {
       '204': {
@@ -144,15 +142,13 @@ export class TodoController {
       where: {id: id, userId: currentUser.id},
     });
     if (!userTodo) {
-      throw {
-        code: 401,
-        message: 'Unauthorized',
-      };
+      throw new HttpErrors.NotFound('Todo not found');
     }
     todo.userId = currentUser.id;
     return await this.todoRepository.replaceById(id, todo);
   }
 
+  // DELETE
   @del('/todos/{id}', {
     responses: {
       '204': {
@@ -166,10 +162,7 @@ export class TodoController {
       where: {id: id, userId: currentUser.id},
     });
     if (!userTodos) {
-      throw {
-        code: 401,
-        message: 'Unauthorized',
-      };
+      throw new HttpErrors.NotFound('Todo not found');
     }
     return await this.todoRepository.deleteById(id);
   }

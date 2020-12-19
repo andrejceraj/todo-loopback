@@ -1,31 +1,23 @@
+import {inject} from '@loopback/core';
+import {Filter, repository} from '@loopback/repository';
 import {
-  Count,
-  CountSchema,
-  Filter,
-  repository,
-  Where,
-} from '@loopback/repository';
-import {
-  del,
   get,
   getModelSchemaRef,
-  getWhereSchemaFor,
+  HttpErrors,
   param,
-  patch,
-  post,
-  requestBody,
+  RequestContext,
 } from '@loopback/rest';
-import {
-  User,
-  Todo,
-} from '../models';
+import {Todo} from '../models';
 import {UserRepository} from '../repositories';
+import {checkAuth} from '../utils';
 
 export class UserTodoController {
   constructor(
+    @inject.context() public context: RequestContext,
     @repository(UserRepository) protected userRepository: UserRepository,
-  ) { }
+  ) {}
 
+  // GET ALL TODOS FOR THE USER
   @get('/users/{id}/todos', {
     responses: {
       '200': {
@@ -42,69 +34,10 @@ export class UserTodoController {
     @param.path.number('id') id: number,
     @param.query.object('filter') filter?: Filter<Todo>,
   ): Promise<Todo[]> {
+    const currentUser = checkAuth(this.context);
+    if (currentUser.id != id) {
+      throw new HttpErrors.Forbidden('Not allowed');
+    }
     return this.userRepository.todos(id).find(filter);
-  }
-
-  @post('/users/{id}/todos', {
-    responses: {
-      '200': {
-        description: 'User model instance',
-        content: {'application/json': {schema: getModelSchemaRef(Todo)}},
-      },
-    },
-  })
-  async create(
-    @param.path.number('id') id: typeof User.prototype.id,
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Todo, {
-            title: 'NewTodoInUser',
-            exclude: ['id'],
-            optional: ['userId']
-          }),
-        },
-      },
-    }) todo: Omit<Todo, 'id'>,
-  ): Promise<Todo> {
-    return this.userRepository.todos(id).create(todo);
-  }
-
-  @patch('/users/{id}/todos', {
-    responses: {
-      '200': {
-        description: 'User.Todo PATCH success count',
-        content: {'application/json': {schema: CountSchema}},
-      },
-    },
-  })
-  async patch(
-    @param.path.number('id') id: number,
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Todo, {partial: true}),
-        },
-      },
-    })
-    todo: Partial<Todo>,
-    @param.query.object('where', getWhereSchemaFor(Todo)) where?: Where<Todo>,
-  ): Promise<Count> {
-    return this.userRepository.todos(id).patch(todo, where);
-  }
-
-  @del('/users/{id}/todos', {
-    responses: {
-      '200': {
-        description: 'User.Todo DELETE success count',
-        content: {'application/json': {schema: CountSchema}},
-      },
-    },
-  })
-  async delete(
-    @param.path.number('id') id: number,
-    @param.query.object('where', getWhereSchemaFor(Todo)) where?: Where<Todo>,
-  ): Promise<Count> {
-    return this.userRepository.todos(id).delete(where);
   }
 }

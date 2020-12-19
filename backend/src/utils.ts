@@ -1,4 +1,4 @@
-import {RequestContext} from '@loopback/rest';
+import {HttpErrors, RequestContext} from '@loopback/rest';
 import jwt from 'jsonwebtoken';
 
 export const checkAuth = (context: RequestContext): any => {
@@ -12,9 +12,6 @@ export const checkAuth = (context: RequestContext): any => {
     }
     throw {};
   } catch (err) {
-    throw {
-      code: 401,
-      message: 'Unauthorized',
-    };
+    throw new HttpErrors.Unauthorized('Not authorized for action');
   }
 };
