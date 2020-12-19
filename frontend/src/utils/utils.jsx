@@ -4,3 +4,9 @@ export const getCurrentUser = () => {
   }
   return undefined;
 }
+
+export const getFilterFromQuery = () => {
+  const params = new URLSearchParams(window.location.search);
+  const filter = params.get('filter');
+  return filter;
+}

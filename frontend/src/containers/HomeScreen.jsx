@@ -1,15 +1,16 @@
 import React, { Component } from "react";
 import axiosInstance from "../api/AxiosInstance";
 import Todo from "../components/Todo";
-import { getCurrentUser } from "../utils/utils";
+import { getCurrentUser, getFilterFromQuery } from "../utils/utils";
 import Button from "react-bootstrap/Button";
 import ButtonGroup from "react-bootstrap/ButtonGroup";
 import NewTodo from "../components/NewTodo";
+import history from "../history";
 
 class HomeScreen extends Component {
   state = {
     todos: [],
-    filter: "all",
+    filter: (getFilterFromQuery() || "all"),
   };
 
   componentDidMount = () => {
@@ -40,6 +41,7 @@ class HomeScreen extends Component {
   };
 
   filterTodos = (filter) => {
+    history.push("?filter=" + filter);
     this.setState({ filter });
   };
 
