@@ -46,7 +46,7 @@ export class UserController {
       },
     })
     userCredentials: UserCredentials,
-  ): Promise<{token: string}> {
+  ): Promise<{token: string, user: {id?: number, username: string}}> {
     const foundUser = await this.userRepository.findOne({
       where: {username: userCredentials.username},
     });
@@ -63,11 +63,17 @@ export class UserController {
       'JWT_secret',
       {expiresIn: '2h'},
     );
-    return {token: token};
+    return {
+      token: token,
+      user: {
+        id: newUser.id,
+        username: newUser.username
+      }
+    };
   }
 
   // LOGIN
-  @post('/login', {
+  @post('/users/login', {
     responses: {
       '200': {
         description: 'Token',
@@ -95,7 +101,7 @@ export class UserController {
       },
     })
     userCredentials: UserCredentials,
-  ): Promise<{token: string}> {
+  ): Promise<{token: string, user: {id?: number, username: string}}> {
     const user = await this.userRepository.findOne({
       where: {username: userCredentials.username},
     });
@@ -111,7 +117,13 @@ export class UserController {
             'JWT_secret',
             {expiresIn: '2h'},
           );
-          return {token: token};
+          return {
+            token: token,
+            user: {
+              id: user.id,
+              username: user.username
+            }
+          };
         }
       }
     } catch (error) {}
