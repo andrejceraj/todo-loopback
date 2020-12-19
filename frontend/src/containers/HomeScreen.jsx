@@ -3,14 +3,16 @@ import axiosInstance from "../api/AxiosInstance";
 import Todo from "../components/Todo";
 import { getCurrentUser, getFilterFromQuery } from "../utils/utils";
 import Button from "react-bootstrap/Button";
-import ButtonGroup from "react-bootstrap/ButtonGroup";
+import Form from "react-bootstrap/Form";
+import FormControl from "react-bootstrap/FormControl";
 import NewTodo from "../components/NewTodo";
 import history from "../history";
 
 class HomeScreen extends Component {
   state = {
     todos: [],
-    filter: (getFilterFromQuery() || "all"),
+    filter: getFilterFromQuery() || "all",
+    search: "",
   };
 
   componentDidMount = () => {
@@ -47,19 +49,18 @@ class HomeScreen extends Component {
 
   showTodos = () => {
     const filter = this.state.filter;
-    let todos = this.state.todos.sort((a, b) => a.createdAt < b.createdAt ? 1 : -1);
-    return todos.map((todo) => {
-      if (
-        (todo.done && ["all", "done"].includes(filter)) ||
-        (!todo.done && ["all", "todo"].includes(filter))
-      ) {
-        return (
-          <Todo todo={todo} editTodo={this.editTodo} deleteTodo={this.deleteTodo} />
-        );
-      } else {
-        return null;
-      }
-    });
+    let todos = this.state.todos.sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+    return todos
+      .filter((todo) => {
+        return todo.description.toLowerCase().indexOf(this.state.search.toLowerCase()) !== -1;
+      })
+      .map((todo) => {
+        if ((todo.done && ["all", "done"].includes(filter)) || (!todo.done && ["all", "todo"].includes(filter))) {
+          return <Todo todo={todo} editTodo={this.editTodo} deleteTodo={this.deleteTodo} />;
+        } else {
+          return null;
+        }
+      });
   };
 
   createTodo = (todo) => {
@@ -71,7 +72,7 @@ class HomeScreen extends Component {
   };
 
   deleteTodo = (todo) => {
-    axiosInstance.delete("/todos/" + todo.id).then(result => {
+    axiosInstance.delete("/todos/" + todo.id).then((result) => {
       let todos = this.state.todos;
       for (let i = 0; i < todos.length; i++) {
         if (todos[i].id === todo.id) {
@@ -80,17 +81,20 @@ class HomeScreen extends Component {
         }
       }
       this.setState({ todos });
-    })
-  }
+    });
+  };
 
   render = () => {
     const user = getCurrentUser();
     return (
       <div>
+        <h1 className="text-center">To-do list:</h1>
         {user && (
           <>
-            <ButtonGroup size="md" className="mb-2">
+            <div className="d-flex justify-content-between mb-2">
+              <div>
               <Button
+                className="mx-1"
                 onClick={() => this.filterTodos("all")}
                 style={{ width: "100px" }}
                 variant="primary"
@@ -98,6 +102,7 @@ class HomeScreen extends Component {
                 All
               </Button>
               <Button
+                className="mx-1"
                 onClick={() => this.filterTodos("todo")}
                 style={{ width: "100px" }}
                 variant="danger"
@@ -105,13 +110,23 @@ class HomeScreen extends Component {
                 Todo
               </Button>
               <Button
-                onClick={() => this.filterTodos("done")}
+                className="mx-1"
+                  onClick={() => this.filterTodos("done")}
                 style={{ width: "100px" }}
                 variant="success"
               >
                 Done
               </Button>
-            </ButtonGroup>
+              </div>
+              <Form inline>
+                <FormControl
+                  onChange={(e) => this.setState({ search: e.target.value })}
+                  type="text"
+                  placeholder="Search"
+                  className="mr-sm-2"
+                />
+              </Form>
+            </div>
             {this.showTodos()}
             {this.state.filter !== "done" && <NewTodo createTodo={this.createTodo} />}
           </>
