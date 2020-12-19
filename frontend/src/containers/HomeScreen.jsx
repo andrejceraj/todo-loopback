@@ -56,7 +56,7 @@ class HomeScreen extends Component {
       })
       .map((todo) => {
         if ((todo.done && ["all", "done"].includes(filter)) || (!todo.done && ["all", "todo"].includes(filter))) {
-          return <Todo todo={todo} editTodo={this.editTodo} deleteTodo={this.deleteTodo} />;
+          return <Todo key={todo.id} todo={todo} editTodo={this.editTodo} deleteTodo={this.deleteTodo} />;
         } else {
           return null;
         }
@@ -93,30 +93,30 @@ class HomeScreen extends Component {
           <>
             <div className="d-flex justify-content-between mb-2">
               <div>
-              <Button
-                className="mx-1"
-                onClick={() => this.filterTodos("all")}
-                style={{ width: "100px" }}
-                variant="primary"
-              >
-                All
-              </Button>
-              <Button
-                className="mx-1"
-                onClick={() => this.filterTodos("todo")}
-                style={{ width: "100px" }}
-                variant="danger"
-              >
-                Todo
-              </Button>
-              <Button
-                className="mx-1"
+                <Button
+                  className="mx-1"
+                  onClick={() => this.filterTodos("all")}
+                  style={{ width: "100px" }}
+                  variant="primary"
+                >
+                  All
+                </Button>
+                <Button
+                  className="mx-1"
+                  onClick={() => this.filterTodos("todo")}
+                  style={{ width: "100px" }}
+                  variant="danger"
+                >
+                  Todo
+                </Button>
+                <Button
+                  className="mx-1"
                   onClick={() => this.filterTodos("done")}
-                style={{ width: "100px" }}
-                variant="success"
-              >
-                Done
-              </Button>
+                  style={{ width: "100px" }}
+                  variant="success"
+                >
+                  Done
+                </Button>
               </div>
               <Form inline>
                 <FormControl
