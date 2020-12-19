@@ -3,10 +3,13 @@ import axiosInstance from "../api/AxiosInstance";
 import Todo from "../components/Todo";
 import { getCurrentUser } from "../utils/utils";
 import Button from "react-bootstrap/Button";
+import ButtonGroup from "react-bootstrap/ButtonGroup";
+import NewTodo from "../components/NewTodo";
 
 class HomeScreen extends Component {
   state = {
     todos: [],
+    filter: "all",
   };
 
   componentDidMount = () => {
@@ -26,15 +29,43 @@ class HomeScreen extends Component {
 
   setTodoCompletion = (todoId) => {
     let todos = this.state.todos;
-    for(let i = 0; i < todos.length; i++){
-      if(todos[i].id === todoId){
+    for (let i = 0; i < todos.length; i++) {
+      if (todos[i].id === todoId) {
         todos[i].done = !todos[i].done;
-        axiosInstance.patch("/todos/" + todos[i].id, {done: todos[i].done});
+        axiosInstance.patch("/todos/" + todos[i].id, { done: todos[i].done });
         break;
       }
     }
-    this.setState({todos});
-  }
+    this.setState({ todos });
+  };
+
+  filterTodos = (filter) => {
+    this.setState({ filter });
+  };
+
+  showTodos = () => {
+    const filter = this.state.filter;
+    return this.state.todos.map((todo, i) => {
+      if (
+        (todo.done && ["all", "done"].includes(filter)) ||
+        (!todo.done && ["all", "todo"].includes(filter))
+      ) {
+        return (
+          <Todo todo={todo} setTodoCompletion={this.setTodoCompletion} id={i} />
+        );
+      } else {
+        return null;
+      }
+    });
+  };
+
+  createTodo = (todo) => {
+    axiosInstance.post("/todos", todo).then((result) => {
+      let todos = this.state.todos;
+      todos.push(result.data);
+      this.setState({ todos });
+    });
+  };
 
   render = () => {
     const user = getCurrentUser();
@@ -42,9 +73,31 @@ class HomeScreen extends Component {
       <div>
         {user && (
           <>
-            {this.state.todos.map((todo, i) => (
-              <Todo todo={todo} id={i} setTodoCompletion={this.setTodoCompletion} />
-            ))}
+            <ButtonGroup size="md" className="mb-2">
+              <Button
+                onClick={() => this.filterTodos("all")}
+                style={{ width: "100px" }}
+                variant="primary"
+              >
+                All
+              </Button>
+              <Button
+                onClick={() => this.filterTodos("todo")}
+                style={{ width: "100px" }}
+                variant="danger"
+              >
+                Todo
+              </Button>
+              <Button
+                onClick={() => this.filterTodos("done")}
+                style={{ width: "100px" }}
+                variant="success"
+              >
+                Done
+              </Button>
+            </ButtonGroup>
+            {this.showTodos()}
+            {this.state.filter !== "done" && <NewTodo createTodo={this.createTodo} />}
           </>
         )}
         {!user && (

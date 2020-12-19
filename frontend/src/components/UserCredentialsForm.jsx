@@ -1,12 +1,11 @@
 import React from "react";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
-import Alert from 'react-bootstrap/Alert';
+import Alert from "react-bootstrap/Alert";
 
 const UserCredentialsForm = (props) => {
   return (
     <Form onSubmit={(e) => props.onSubmit(e)}>
-      
       <Form.Group>
         <Form.Label htmlFor="username">Username:</Form.Label>
         <Form.Control htmlSize="50" type="text" id="username" name="username" />
