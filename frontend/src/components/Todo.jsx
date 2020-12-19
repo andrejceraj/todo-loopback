@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
+import {formatDate} from '../utils/utils';
 
 const Todo = (props) => {
   const [editMode, setEditMode] = useState(false);
@@ -26,6 +27,7 @@ const Todo = (props) => {
       className="mb-3 p-2 d-flex justify-content-between align-items-center border bg-light rounded-5"
     >
       <Form.Check type={type} id={`check-${todo.id}`}>
+        <p className="p-0 m-0">{formatDate(todo.createdAt)}</p>
         <Form.Check.Input type={type} checked={todo.done} onChange={(e) => changeDone(todo)} />
         {!editMode && <Form.Check.Label>{todo.description}</Form.Check.Label>}
         {editMode && (

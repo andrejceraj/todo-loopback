@@ -34,6 +34,12 @@ export class Todo extends Entity {
   })
   done: boolean;
 
+  @property({
+    type: 'date',
+    default: "$now",
+  })
+  createdAt?: string;
+
   @belongsTo(() => User)
   userId: number;
 

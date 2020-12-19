@@ -47,7 +47,8 @@ class HomeScreen extends Component {
 
   showTodos = () => {
     const filter = this.state.filter;
-    return this.state.todos.map((todo, i) => {
+    let todos = this.state.todos.sort((a, b) => a.createdAt < b.createdAt ? 1 : -1);
+    return todos.map((todo) => {
       if (
         (todo.done && ["all", "done"].includes(filter)) ||
         (!todo.done && ["all", "todo"].includes(filter))
