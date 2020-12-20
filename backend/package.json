@@ -58,6 +58,7 @@
     "@types/bcrypt": "^3.0.0",
     "@types/jsonwebtoken": "^8.5.0",
     "bcrypt": "^5.0.0",
+    "dotenv": "^8.2.0",
     "jsonwebtoken": "^8.5.1",
     "loopback-connector-postgresql": "^5.3.0",
     "tslib": "^2.0.0"

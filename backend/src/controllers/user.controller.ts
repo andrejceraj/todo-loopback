@@ -13,7 +13,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import {User} from '../models';
 import {UserRepository} from '../repositories';
-import {checkAuth} from '../utils';
+import {checkAuth, generateToken} from '../utils';
 
 class UserCredentials {
   username: string;
@@ -58,10 +58,7 @@ export class UserController {
     newUser.username = userCredentials.username;
     newUser.password_hash = password_hash;
     newUser = await this.userRepository.create(newUser);
-    const token = jwt.sign(
-      {id: newUser.id, username: newUser.username},
-      'JWT_secret',
-    );
+    const token = generateToken({id: newUser.id, username: newUser.username});
     return {
       token: token,
       user: {
@@ -111,10 +108,7 @@ export class UserController {
           user.password_hash,
         );
         if (result) {
-          const token = jwt.sign(
-            {id: user.id, username: user.username},
-            'JWT_secret',
-          );
+          const token = generateToken({id: user.id, username: user.username});
           return {
             token: token,
             user: {
