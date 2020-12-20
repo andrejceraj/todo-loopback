@@ -10,7 +10,6 @@ import {
   RequestContext,
 } from '@loopback/rest';
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import {User} from '../models';
 import {UserRepository} from '../repositories';
 import {checkAuth, generateToken} from '../utils';

@@ -15,21 +15,35 @@ const NewTodo = (props) => {
   return (
     <>
       {!inputMode && (
-        <Button className="d-block" onClick={() => setInputMode(true)} variant="primary">
-          Create task
-        </Button>
+        <div className="d-flex justify-content-end mr-4 my-3" >
+          <Button className="ml-2" onClick={() => setInputMode(true)} variant="primary">
+            Create task
+          </Button>
+        </div>
       )}
       {inputMode && (
-        <Form onSubmit={(e) => handleCreateTodo(e)}>
-          <Form.Group>
-            <Form.Control id="description" name="description" type="text" placeholder="New task" />
+        <Form
+          className="mb-3 p-2 d-flex justify-content-between align-items-center border bg-light rounded-5"
+          onSubmit={(e) => handleCreateTodo(e)}
+        >
+          <Form.Group className="w-100">
+            <Form.Control className="" id="description" name="description" type="text" placeholder="New task" />
           </Form.Group>
-          <Button variant="primary" type="submit">
-            Submit
-          </Button>
-          <Button onClick={() => setInputMode(false)} variant="danger" type="canel">
-            Cancel
-          </Button>
+          <div style={{ minWidth: "180px" }}>
+            <Button style={{ width: "70px" }} className="ml-2" size="sm" variant="primary" type="submit">
+              Submit
+            </Button>
+            <Button
+              style={{ width: "70px" }}
+              className="ml-2"
+              size="sm"
+              onClick={() => setInputMode(false)}
+              variant="danger"
+              type="reset"
+            >
+              Cancel
+            </Button>
+          </div>
         </Form>
       )}
     </>

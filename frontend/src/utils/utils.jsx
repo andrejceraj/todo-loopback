@@ -12,10 +12,11 @@ export const getFilterFromQuery = () => {
 }
 
 export const formatDate = (sqlDate) => {
-  let year = sqlDate.substring(0, 4);
-  let month = sqlDate.substring(5, 7);
-  let day = sqlDate.substring(8, 10);
-  let hour = sqlDate.substring(11, 13);
-  let min = sqlDate.substring(14, 16);
+  const date = new Date(Date.parse(sqlDate));
+  let year = date.getFullYear();
+  let month = date.getMonth();
+  let day = date.getDate()
+  let hour = date.getHours();
+  let min = date.getMinutes();
   return `${day}.${month}.${year}. ${hour}:${min}`;
 };

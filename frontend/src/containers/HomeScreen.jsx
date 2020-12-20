@@ -88,9 +88,9 @@ class HomeScreen extends Component {
     const user = getCurrentUser();
     return (
       <div>
-        <h1 className="text-center">To-do list:</h1>
         {user && (
           <>
+          <h1 className="text-center">To-do list:</h1>
             <div className="d-flex justify-content-between mb-2">
               <div>
                 <Button
@@ -127,8 +127,8 @@ class HomeScreen extends Component {
                 />
               </Form>
             </div>
-            {this.showTodos()}
             {this.state.filter !== "done" && <NewTodo createTodo={this.createTodo} />}
+            {this.showTodos()}
           </>
         )}
         {!user && (
