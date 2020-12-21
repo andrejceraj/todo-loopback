@@ -1,0 +1,31 @@
+version: '3.8'
+services: 
+  backend:
+    restart: always
+    build: ./backend
+    links:
+      - "db:database"
+    ports: 
+      - "3001:3001"
+    depends_on: 
+      - db
+  frontend:
+    restart: always
+    build: ./frontend
+    ports: 
+      - "3000:3000"
+    depends_on: 
+      - backend
+  db:
+    image: postgres
+    environment: 
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: suprabit
+    ports: 
+      - "5432:5432"
+    volumes: 
+      - ./pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgData:
